@@ -7,6 +7,9 @@ option go_package = "Animales-go/proto;proto";
 
 service animalesservice {
     rpc GetAnimalesInfo (AnimalRequest) returns (AnimalResponse);
+    rpc GetAnimalesList( Empty ) returns (stream AnimalResponse);
+    rpc AddAnimales(stream NewAnimalRequest) returns (AddAnimalResponse);
+    rpc GetAnimalesByType(stream AnimalTypeRequest) returns (stream AnimalResponse);
 }
 
 message AnimalRequest {
@@ -18,3 +21,17 @@ message AnimalResponse {
     string Type = 2;
     int32 NumPatas = 3;
 }
+
+message NewAnimalRequest {
+    string Name = 1;
+    string Type = 2;
+    int32 NumPatas = 3;
+}
+message AddAnimalResponse{
+    int32 Count = 1;
+}
+message AnimalTypeRequest {
+    string Type = 1;
+}
+
+message Empty {}

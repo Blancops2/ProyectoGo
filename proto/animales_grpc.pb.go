@@ -19,7 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Animalesservice_GetAnimalesInfo_FullMethodName = "/animales.animalesservice/GetAnimalesInfo"
+	Animalesservice_GetAnimalesInfo_FullMethodName   = "/animales.animalesservice/GetAnimalesInfo"
+	Animalesservice_GetAnimalesList_FullMethodName   = "/animales.animalesservice/GetAnimalesList"
+	Animalesservice_AddAnimales_FullMethodName       = "/animales.animalesservice/AddAnimales"
+	Animalesservice_GetAnimalesByType_FullMethodName = "/animales.animalesservice/GetAnimalesByType"
 )
 
 // AnimalesserviceClient is the client API for Animalesservice service.
@@ -27,6 +30,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AnimalesserviceClient interface {
 	GetAnimalesInfo(ctx context.Context, in *AnimalRequest, opts ...grpc.CallOption) (*AnimalResponse, error)
+	GetAnimalesList(ctx context.Context, in *Empty, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AnimalResponse], error)
+	AddAnimales(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[NewAnimalRequest, AddAnimalResponse], error)
+	GetAnimalesByType(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AnimalTypeRequest, AnimalResponse], error)
 }
 
 type animalesserviceClient struct {
@@ -47,11 +53,59 @@ func (c *animalesserviceClient) GetAnimalesInfo(ctx context.Context, in *AnimalR
 	return out, nil
 }
 
+func (c *animalesserviceClient) GetAnimalesList(ctx context.Context, in *Empty, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AnimalResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &Animalesservice_ServiceDesc.Streams[0], Animalesservice_GetAnimalesList_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[Empty, AnimalResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Animalesservice_GetAnimalesListClient = grpc.ServerStreamingClient[AnimalResponse]
+
+func (c *animalesserviceClient) AddAnimales(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[NewAnimalRequest, AddAnimalResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &Animalesservice_ServiceDesc.Streams[1], Animalesservice_AddAnimales_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[NewAnimalRequest, AddAnimalResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Animalesservice_AddAnimalesClient = grpc.ClientStreamingClient[NewAnimalRequest, AddAnimalResponse]
+
+func (c *animalesserviceClient) GetAnimalesByType(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AnimalTypeRequest, AnimalResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &Animalesservice_ServiceDesc.Streams[2], Animalesservice_GetAnimalesByType_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[AnimalTypeRequest, AnimalResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Animalesservice_GetAnimalesByTypeClient = grpc.BidiStreamingClient[AnimalTypeRequest, AnimalResponse]
+
 // AnimalesserviceServer is the server API for Animalesservice service.
 // All implementations must embed UnimplementedAnimalesserviceServer
 // for forward compatibility.
 type AnimalesserviceServer interface {
 	GetAnimalesInfo(context.Context, *AnimalRequest) (*AnimalResponse, error)
+	GetAnimalesList(*Empty, grpc.ServerStreamingServer[AnimalResponse]) error
+	AddAnimales(grpc.ClientStreamingServer[NewAnimalRequest, AddAnimalResponse]) error
+	GetAnimalesByType(grpc.BidiStreamingServer[AnimalTypeRequest, AnimalResponse]) error
 	mustEmbedUnimplementedAnimalesserviceServer()
 }
 
@@ -64,6 +118,15 @@ type UnimplementedAnimalesserviceServer struct{}
 
 func (UnimplementedAnimalesserviceServer) GetAnimalesInfo(context.Context, *AnimalRequest) (*AnimalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAnimalesInfo not implemented")
+}
+func (UnimplementedAnimalesserviceServer) GetAnimalesList(*Empty, grpc.ServerStreamingServer[AnimalResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method GetAnimalesList not implemented")
+}
+func (UnimplementedAnimalesserviceServer) AddAnimales(grpc.ClientStreamingServer[NewAnimalRequest, AddAnimalResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method AddAnimales not implemented")
+}
+func (UnimplementedAnimalesserviceServer) GetAnimalesByType(grpc.BidiStreamingServer[AnimalTypeRequest, AnimalResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method GetAnimalesByType not implemented")
 }
 func (UnimplementedAnimalesserviceServer) mustEmbedUnimplementedAnimalesserviceServer() {}
 func (UnimplementedAnimalesserviceServer) testEmbeddedByValue()                         {}
@@ -104,6 +167,31 @@ func _Animalesservice_GetAnimalesInfo_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Animalesservice_GetAnimalesList_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(AnimalesserviceServer).GetAnimalesList(m, &grpc.GenericServerStream[Empty, AnimalResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Animalesservice_GetAnimalesListServer = grpc.ServerStreamingServer[AnimalResponse]
+
+func _Animalesservice_AddAnimales_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(AnimalesserviceServer).AddAnimales(&grpc.GenericServerStream[NewAnimalRequest, AddAnimalResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Animalesservice_AddAnimalesServer = grpc.ClientStreamingServer[NewAnimalRequest, AddAnimalResponse]
+
+func _Animalesservice_GetAnimalesByType_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(AnimalesserviceServer).GetAnimalesByType(&grpc.GenericServerStream[AnimalTypeRequest, AnimalResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Animalesservice_GetAnimalesByTypeServer = grpc.BidiStreamingServer[AnimalTypeRequest, AnimalResponse]
+
 // Animalesservice_ServiceDesc is the grpc.ServiceDesc for Animalesservice service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -116,6 +204,23 @@ var Animalesservice_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Animalesservice_GetAnimalesInfo_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetAnimalesList",
+			Handler:       _Animalesservice_GetAnimalesList_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "AddAnimales",
+			Handler:       _Animalesservice_AddAnimales_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetAnimalesByType",
+			Handler:       _Animalesservice_GetAnimalesByType_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "proto/animales.proto",
 }
